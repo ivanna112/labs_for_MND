@@ -3,7 +3,7 @@ import math
 
 
 class Lab2:
-    variant = 323
+    variant = 301
     m = 6
 
     y_max = (30 - variant) * 10
