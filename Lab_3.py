@@ -182,7 +182,11 @@ while (flag):
         flag = False
     else:
         print("Gkr = {0} < Gp = {1} ---> Дисперсії неоднорідні, збільшимо m і проведемо розрахунки".format(Gkr, Gp))
-        
+        Y_exp[0].append(r.randint(math.floor(Y_min), math.floor(Y_max)))
+        Y_exp[1].append(r.randint(math.floor(Y_min), math.floor(Y_max)))
+        Y_exp[2].append(r.randint(math.floor(Y_min), math.floor(Y_max)))
+        Y_exp[3].append(r.randint(math.floor(Y_min), math.floor(Y_max)))
+        m += 1
 
 # Стьюдент
 S2B = sum(y_var) / N
