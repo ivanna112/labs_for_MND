@@ -1,239 +1,227 @@
-import random
 import math
+import numpy as np
+from scipy.stats import t, f
+import random as r
+from functools import partial
+import prettytable as p
+import re
+from decimal import Decimal
 
+m = 3
+prob = 0.95
+x1_min = -10
+x1_max = 50
+x2_min = 20
+x2_max = 60
+x3_min = -10
+x3_max = 5
+k = 3
+x_ranges = [[x1_min, x1_max], [x2_min, x2_max], [x3_min, x3_max]]
+x0_norm = [1, 1, 1, 1]
+x1_norm = [-1, -1, 1, 1]
+x2_norm = [-1, 1, -1, 1]
+x3_norm = [-1, 1, 1, -1]
+N = len(x1_norm)
+xcp_max = (x1_max + x2_max + x3_max) / 3
+xcp_min = (x1_min + x2_min + x3_min) / 3
+x_norm = [x1_norm, x2_norm, x3_norm]
+Y_min = 200 + xcp_min
+Y_max = 200 + xcp_max
 
-# Лабораторна робота №3
-# Виконала Баранчук Іванна  Варіант - 301
+x_abs = []
 
-class Lab3:
-    x1_min = -10
-    x1_max = 50
-    x2_min = 20
-    x2_max = 60
-    x3_min = -10
-    x3_max = 5
-
-    gt = 0.7679
-    tf = 2.306
-    ft = 4.5
-    m = 3
-    n = 4
-
-    def __init__(self):
-        self.y_max = 200 + (self.x1_max + self.x2_max + self.x3_max) / 3
-        self.y_min = 200 + (self.x1_min + self.x2_min + self.x3_min) / 3
-
-        self.x1 = [random.randint(self.x1_min, self.x1_max + 1) for i in range(4)]
-        self.x2 = [random.randint(self.x2_min, self.x2_max + 1) for i in range(4)]
-        self.x3 = [random.randint(self.x3_min, self.x3_max + 1) for i in range(4)]
-        self.y1 = [random.randint(int(self.y_min), int(self.y_max) + 1) for i in range(4)]
-        self.y2 = [random.randint(int(self.y_min), int(self.y_max) + 1) for i in range(4)]
-        self.y3 = [random.randint(int(self.y_min), int(self.y_max) + 1) for i in range(4)]
-
-        self.plan_matrix = [[1, 1, 1, 1],
-                       [-1, -1, 1, 1],
-                       [-1, 1, -1, 1],
-                       [-1, 1, 1, -1]]
-
-        self.average_y = [0, 0, 0, 0]
-        for i in range(0, len(self.x1)):
-            self.average_y[i] = (self.y1[i] + self.y2[i] + self.y3[i]) / 3
-        print(f"Average Y: {self.average_y}")
-
-        self.calculate_and_print()
-
-    @staticmethod
-    def func_mx(arr, main_arr):
-        main_arr.append(sum(arr) / len(arr))
-
-    @staticmethod
-    def func_aii(arr, main_arr):
-        main_arr.append((arr[0] ** 2 + arr[1] ** 2 + arr[2] ** 2 + arr[3] ** 2) / len(arr))
-
-    @staticmethod
-    def func_aij(arr1, arr2, main_arr):
-        main_arr.append((arr1[0] * arr2[0] + arr1[1] * arr2[1] + arr1[2] * arr2[2] + arr1[3] * arr2[3]) / len(arr1))
-
-    def func_a(self, arr, main_arr):
-        main_arr.append(
-            (arr[0] * self.average_y[0] + arr[1] * self.average_y[1] + arr[2] * self.average_y[2] + arr[3] * self.average_y[3]) / len(arr))
-
-    def calculate_and_print(self):
-        mx = []
-        Lab3.func_mx(self.x1, mx)
-        Lab3.func_mx(self.x2, mx)
-        Lab3.func_mx(self.x3, mx)
-        print(f"\nMX: {mx}")
-
-        my = (self.average_y[0] + self.average_y[1] + self.average_y[2] + self.average_y[3]) / len(self.average_y)
-        print(f"MY: {my}")
-
-        a = []
-        self.func_a(self.x1, a)
-        self.func_a(self.x2, a)
-        self.func_a(self.x3, a)
-        print(f"\nA: {a}")
-
-        a11 = []
-        Lab3.func_aii(self.x1, a11)
-        print(f"A11: {a11}")
-
-        a22 = []
-        Lab3.func_aii(self.x2, a22)
-        print(f"A22: {a22}")
-
-        a33 = []
-        Lab3.func_aii(self.x3, a33)
-        print(f"A33: {a33}")
-
-        a12 = a21 = []
-        Lab3.func_aij(self.x1, self.x2, a12)
-        print(f"A12 = A21: {a12}")
-
-        a13 = a31 = []
-        Lab3.func_aij(self.x1, self.x3, a13)
-        print(f"A13 = A31: {a13}")
-
-        a23 = a32 = []
-        Lab3.func_aij(self.x2, self.x3, a23)
-        print(f"A23 = A32: {a23}")
-
-        r01 = [1, mx[0], mx[1], mx[2]]
-        r02 = [mx[0], a11[0], a12[0], a13[0]]
-        r03 = [mx[1], a12[0], a22[0], a32[0]]
-        r04 = [mx[2], a13[0], a23[0], a33[0]]
-        temp_0 = [r01, r02, r03, r04]
-
-        determinant = 1 * a11[0] * a22[0] * a33[0] + mx[0] * a12[0] * a32[0] * mx[2] + mx[1] * a13[0] * mx[1] * a13[0] + mx[
-            2] * mx[0] * a12[0] * a23[0] - \
-                 (mx[2] * a12[0] * a12[0] * mx[2] + a13[0] * a22[0] * a13[0] * 1 + a23[0] * a32[0] * mx[0] * mx[0] +
-                  a33[0] * mx[1] * a11[0] * mx[1])
-
-        r11 = [my, mx[0], mx[1], mx[2]]
-        r12 = [a[0], a11[0], a12[0], a13[0]]
-        r13 = [a[1], a12[0], a22[0], a32[0]]
-        r14 = [a[2], a13[0], a23[0], a33[0]]
-        temp_1 = [r11, r12[0], r13[0], r14[0]]
-
-        determinant_1 = my * a11[0] * a22[0] * a33[0] + a[0] * a12[0] * a32[0] * mx[2] + a[1] * a13[0] * mx[1] * a13[0] + a[
-            2] * mx[0] * a12[0] * a23[0] - \
-                  (a[2] * a12[0] * a12[0] * mx[2] + a13[0] * a22[0] * a13[0] * my + a23[0] * a32[0] * a[0] * mx[0] +
-                   a33[0] * a[1] * a11[0] * mx[1])
-
-        r21 = [1, my, mx[1], mx[2]]
-        r22 = [mx[0], a[0], a12[0], a13[0]]
-        r23 = [mx[1], a[1], a22[0], a32[0]]
-        r24 = [mx[2], a[2], a23[0], a33[0]]
-        temp_2 = [r21, r22, r23, r24]
-
-        determinant_2 = 1 * a[0] * a22[0] * a33[0] + my * a12[0] * a32[0] * mx[2] + mx[1] * a13[0] * mx[1] * a[2] + mx[2] * \
-                  mx[0] * a[1] * a23[0] - \
-                  (mx[2] * a[1] * a12[0] * mx[2] + a[2] * a22[0] * a13[0] * 1 + a23[0] * a32[0] * my * mx[0] + a33[0] *
-                   mx[1] * a[0] * mx[1])
-
-        r31 = [1, mx[0], my, mx[2]]
-        r32 = [mx[0], a11[0], a[0], a13[0]]
-        r33 = [mx[1], a12[0], a[1], a32[0]]
-        r34 = [mx[2], a13[0], a[2], a33[0]]
-        temp_3 = [r31, r32, r33, r34]
-
-        determinant_3 = 1 * a11[0] * a[1] * a33[0] + mx[0] * a[0] * a32[0] * mx[2] + my * a13[0] * mx[1] * a13[0] + mx[2] * \
-                  mx[0] * a12[0] * a[2] - \
-                  (mx[2] * a12[0] * a[0] * mx[2] + a13[0] * a[1] * a13[0] * 1 + a[2] * a32[0] * mx[0] * mx[0] + a33[0] *
-                   mx[1] * a11[0] * my)
-
-        r41 = [1, mx[0], mx[1], my]
-        r42 = [mx[0], a11[0], a12[0], a[0]]
-        r43 = [mx[1], a12[0], a22[0], a[1]]
-        r44 = [mx[2], a13[0], a23[0], a[2]]
-        temp_4 = [r41, r42, r43, r44]
-
-        determinant_4 = 1 * a11[0] * a22[0] * a[2] + mx[0] * a12[0] * a[1] * mx[2] + mx[1] * a[0] * mx[1] * a13[0] + my * mx[
-            0] * a12[0] * a23[0] - \
-                  (mx[2] * a12[0] * a12[0] * my + a13[0] * a22[0] * a[0] * 1 + a23[0] * a[1] * mx[0] * mx[0] + a[2] *
-                   mx[1] * a11[0] * mx[1])
-
-        b = [0, 0, 0, 0]
-        b[0] = determinant_1 / determinant
-        b[1] = determinant_2 / determinant
-        b[2] = determinant_3 / determinant
-        b[3] = determinant_4 / determinant
-
-        print("\n")
-        for i in range(4):
-            print(f"b{i}: {b[i]}")
-        print("\n")
-
-        y = []
-        for i in range(len(self.x1)):
-            y.append(b[0] + b[1] * self.x1[i] + b[2] * self.x2[i] + b[3] * self.x3[i])
-            print(f"Y{i + 1}: {y[i]}")
-
-        dispersion = [0, 0, 0, 0]
-        for i in range(0, len(dispersion)):
-            dispersion[i] = ((self.y1[i] - self.average_y[i]) ** 2 + (self.y2[i] - self.average_y[i]) ** 2 + (self.y3[i] - self.average_y[i]) ** 2) / 3
-        print(f"Dispersion: {dispersion}")
-
-        print('\nПеревірка однорідності дисперсії за критерієм Кохрена:')
-        gp = max(dispersion) / sum(dispersion)
-        if gp < self.gt:
-            print("Дисперсія однорідна")
+for i in range(k):
+    temp = []
+    for j in x_norm[i]:
+        if j == 1:
+            temp.append(x_ranges[i][1])
         else:
-            print('Дисперсія не однорідна. Потрібно збільшити m')
-            return
+            temp.append(x_ranges[i][0])
+    x_abs.append(temp)
+print('Абсолютні значення: ' + str(x_abs))
 
-        sb = sum(dispersion) / len(dispersion)
-        sb2_uniform = sb / (self.n * self.m)
-        sb_uniform = math.sqrt(sb2_uniform)
-
-        beta = [0, 0, 0, 0]
-        beta[0] = (self.average_y[0] * 1 + self.average_y[1] * 1 + self.average_y[2] * 1 + self.average_y[3] * 1) / self.n
-        beta[1] = (self.average_y[0] * (-1) + self.average_y[1] * (-1) + self.average_y[2] * 1 + self.average_y[3] * 1) / self.n
-        beta[2] = (self.average_y[0] * (-1) + self.average_y[1] * 1 + self.average_y[2] * (-1) + self.average_y[3] * 1) / self.n
-        beta[3] = (self.average_y[0] * (-1) + self.average_y[1] * 1 + self.average_y[2] * 1 + self.average_y[3] * (-1)) / self.n
-        print(f"\nBeta: {beta}")
-
-        t = []
-        for i in range(len(beta)):
-            t.append(abs(beta[i]) / sb_uniform)
-        print(f"t0: {t}")
-
-        print('\nОцінка значимості коефіцієнтів регресії згідно критерію Стьюдента:')
-        d = 0  # кількість значимих коефіцієнтів
-        temp = [0, 0, 0, 0]
-        n = 4
-        tf = 2.306
-
-        for i in range(0, n):
-            if t[i] <= tf:
-                temp[i] = 0
-            else:
-                temp[i] = b[i]
-                d += 1
-
-        y_2 = []
-        for i in range(0, n):
-            y_2.append(temp[0] + temp[1] * self.x1[i] + temp[2] * self.x2[i] + temp[3] * self.x3[i])
-        print(f"y_2: {y_2}")
-
-        # Критерій Фішера
-        print("\nКритерій Фішера")
-        s_ad = []
-        tmp = []
-        kof = self.m / (n - d)
-        for i in range(len(y_2)):
-            tmp.append((y_2[i] - self.average_y[i]) ** 2)
-        s_ad.append(kof * sum(tmp))
-        print(f"S_ad: {s_ad}")
-
-        fp = s_ad[0] / sb2_uniform
-        print(f"Fp: {fp}\n")
-        if fp > self.ft:
-            print("Рівняння регресії неадекватно оригіналу при рівні значимості 0.05")
-        else:
-            print("Рівняння регресії адекватно оригіналу при рівні значимості 0.05")
-
-        print(f"y = {b[0]} + {b[1]} * x1 + {b[2]} * x2 + {b[3]} * x3")
+Y_exp = []
+for i in range(N):
+    temp = []
+    for _ in range(m):
+        temp.append(r.randint(math.floor(Y_min), math.floor(Y_max)))
+    Y_exp.append(temp)
 
 
-Lab3()
+def y_perevirka_norm(x1, x2, x3):
+    return b0 + x1 * b1 + x2 * b2 + x3 * b3
+
+
+def y_perevirka_abs(x1, x2, x3):
+    return a0 + a1 * x1 + a2 * x2 + a3 * x3
+
+
+def get_cohren_critical(prob, f1, f2):
+    f_crit = f.isf((1 - prob) / f2, f1, (f2 - 1) * f1)
+    return f_crit / (f_crit + f2 - 1)
+
+
+def get_fisher_critical(prob, f3, f4):
+    for i in [j * 0.001 for j in range(int(10 / 0.001))]:
+        if abs(f.cdf(i, f4, f3) - prob) < 0.0001:
+            return i
+
+
+def get_student_critical(prob, f3):
+    for i in [j * 0.0001 for j in range(int(5 / 0.0001))]:
+        if abs(t.cdf(i, f3) - (0.5 + prob / 0.1 * 0.05)) < 0.000005:
+            return i
+
+
+def my_mean(sample):
+    # '[[1, 2], [3, 4]]' -> '1, 2, 3, 4' -> 2.5
+    digits_str: str = re.sub(r"[\[\],]+", '', str(sample))
+    digits = [float(digit_str) for digit_str in digits_str.split()]
+    return sum(digits) / len(digits)
+
+
+flag = True
+while (flag):
+    table1 = p.PrettyTable()
+    table1.add_column("X0", x0_norm)
+    for i in range(k):
+        table1.add_column("X{0}".format(i + 1), x_norm[i])
+    for i in range(m):
+        table1.add_column("Y{0}".format(i + 1), [j[i] for j in Y_exp])
+    print("Нормалізована матриця:\n", table1)
+
+    mx_norm_list = [my_mean(i) for i in x_norm]
+    y_aver = [my_mean(i) for i in Y_exp]
+    my = my_mean(y_aver)
+    a1 = my_mean([x_norm[0][i] * y_aver[i] for i in range(N)])
+    a2 = my_mean([x_norm[1][i] * y_aver[i] for i in range(N)])
+    a3 = my_mean([x_norm[2][i] * y_aver[i] for i in range(N)])
+    a11 = my_mean([x_norm[0][i] ** 2 for i in range(N)])
+    a22 = my_mean([x_norm[1][i] ** 2 for i in range(N)])
+    a33 = my_mean([x_norm[2][i] ** 2 for i in range(N)])
+    a12 = my_mean([x_norm[0][i] * x_norm[1][i] for i in range(N)])
+    a13 = my_mean([x_norm[0][i] * x_norm[2][i] for i in range(N)])
+    a23 = my_mean([x_norm[1][i] * x_norm[2][i] for i in range(N)])
+    a21 = a12
+    a31 = a13
+    a32 = a23
+
+    znam = np.array([[1, mx_norm_list[0], mx_norm_list[1], mx_norm_list[2]],
+                     [mx_norm_list[0], a11, a12, a13],
+                     [mx_norm_list[1], a12, a22, a32],
+                     [mx_norm_list[2], a13, a23, a33]])
+
+    b0_matr = np.array([[my, mx_norm_list[0], mx_norm_list[1], mx_norm_list[2]],
+                        [a1, a11, a12, a13],
+                        [a2, a12, a22, a32],
+                        [a3, a13, a23, a33]])
+
+    b1_matr = np.array([[1, my, mx_norm_list[1], mx_norm_list[2]],
+                        [mx_norm_list[0], a1, a12, a13],
+                        [mx_norm_list[1], a2, a22, a32],
+                        [mx_norm_list[2], a3, a23, a33]])
+
+    b2_matr = np.array([[1, mx_norm_list[0], my, mx_norm_list[2]],
+                        [mx_norm_list[0], a11, a1, a13],
+                        [mx_norm_list[1], a12, a2, a32],
+                        [mx_norm_list[2], a13, a3, a33]])
+
+    b3_matr = np.array([[1, mx_norm_list[0], mx_norm_list[1], my],
+                        [mx_norm_list[0], a11, a12, a1],
+                        [mx_norm_list[1], a12, a22, a2],
+                        [mx_norm_list[2], a13, a23, a3]])
+
+    znam_value = np.linalg.det(znam)
+    b0 = np.linalg.det(b0_matr) / znam_value
+    b1 = np.linalg.det(b1_matr) / znam_value
+    b2 = np.linalg.det(b2_matr) / znam_value
+    b3 = np.linalg.det(b3_matr) / znam_value
+    print("Рівняння регресії для нормованих значень:\ny = {0} + {1}*x1 + {2}*x2 + {3}*x3".format(b0, b1, b2, b3))
+    print("Перевірка знайденого рівняння")
+    print("Р-ня регресії для Х11, Х21, Х31 =", y_perevirka_norm(x_norm[0][0], x_norm[1][0], x_norm[2][0]))
+    print("Середнє y1 =", y_aver[0])
+    print("Р-ня регресії для Х12, Х22, Х32 =", y_perevirka_norm(x_norm[0][1], x_norm[1][1], x_norm[2][1]))
+    print("Середнє y2 =", y_aver[1])
+    print("Р-ня регресії для Х13, Х23, Х33 =", y_perevirka_norm(x_norm[0][2], x_norm[1][2], x_norm[2][2]))
+    print("Середнє y3 =", y_aver[2])
+
+    delt_x1 = (x1_max - x1_min) / 2
+    delt_x2 = (x2_max - x2_min) / 2
+    delt_x3 = (x3_max - x3_min) / 2
+    x10 = (x1_max + x1_min) / 2
+    x20 = (x2_max + x2_min) / 2
+    x30 = (x3_max + x3_min) / 2
+    a0 = b0 - b1 * (x10 / delt_x1) - b2 * (x20 / delt_x2) - b3 * (x30 / delt_x3)
+    a1 = b1 / delt_x1
+    a2 = b2 / delt_x2
+    a3 = b3 / delt_x3
+
+    print("Рівняння регресії для абсолютних значень:\ny = {0} + {1}*x1 + {2}*x2 + {3}*x3".format(a0, a1, a2, a3))
+
+    print("Перевірка абсолютних значень")
+    print("Р-ня регресії для Х11, Х21, Х31 =", y_perevirka_abs(x_abs[0][0], x_abs[1][0], x_abs[2][0]))
+    print("Середнє y1 =", y_aver[0])
+    print("Р-ня регресії для Х12, Х22, Х32 =", y_perevirka_abs(x_abs[0][1], x_abs[1][1], x_abs[2][1]))
+    print("Середнє y2 =", y_aver[1])
+    print("Р-ня регресії для Х13, Х23, Х33 =", y_perevirka_abs(x_abs[0][2], x_abs[1][2], x_abs[2][2]))
+    print("Середнє y3 =", y_aver[2])
+    print("Р-ня регресії для Х14, Х24, Х34 =", y_perevirka_abs(x_abs[0][3], x_abs[1][3], x_abs[2][3]))
+    print("Середнє y3 =", y_aver[3])
+
+    # Кохрен
+    y_var = [np.var(Y_exp[i]) for i in range(N)]
+    flag = False
+    f1 = m - 1
+    f2 = N
+    f3 = f2 * f1
+    Gp = max(y_var) / sum(y_var)
+    Gkr = get_cohren_critical(prob, f1, f2)
+    print('-' * 100)
+    if (Gkr > Gp):
+        print("Gkr = {0} > Gp = {1} ---> Дисперсії однорідні".format(Gkr, Gp))
+        flag = False
+    else:
+        print("Gkr = {0} < Gp = {1} ---> Дисперсії неоднорідні, збільшимо m і проведемо розрахунки".format(Gkr, Gp))
+        
+
+# Стьюдент
+S2B = sum(y_var) / N
+S2b = S2B / (N * m)
+Sb = math.sqrt(S2b)
+beta0 = sum([y_aver[i] * x0_norm[i] for i in range(N)]) / N
+beta1 = sum([y_aver[i] * x1_norm[i] for i in range(N)]) / N
+beta2 = sum([y_aver[i] * x2_norm[i] for i in range(N)]) / N
+beta3 = sum([y_aver[i] * x3_norm[i] for i in range(N)]) / N
+t0 = abs(beta0) / Sb
+t1 = abs(beta1) / Sb
+t2 = abs(beta2) / Sb
+t3 = abs(beta3) / Sb
+tkr = get_student_critical(prob, f3)
+
+d = sum([1 if tkr < i else 0 for i in [t0, t1, t2, t3]])
+
+a0 = a0 if tkr < t0 else 0
+a1 = a1 if tkr < t1 else 0
+a2 = a2 if tkr < t2 else 0
+a3 = a3 if tkr < t3 else 0
+
+y_new = [y_perevirka_abs(x_abs[0][i], x_abs[1][i], x_abs[2][i]) for i in range(N)]
+
+print("-" * 100)
+print("Після перевірки значимості коефіцієнтів: ")
+print("Рівняння регресії для абсолютних значень:\ny = {0} + {1}*x1 + {2}*x2 + {3}*x3".format(a0, a1, a2, a3))
+print("Р-ня регресії для Х11, Х21, Х31 =", y_new[0])
+print("Р-ня регресії для Х12, Х22, Х32 =", y_new[1])
+print("Р-ня регресії для Х13, Х23, Х33 =", y_new[2])
+print("Р-ня регресії для Х14, Х24, Х34 =", y_new[3])
+
+# Фішер
+print("-" * 100)
+f4 = N - d
+S2ad = (m / (N - d)) * sum([(y_new[i] - y_aver[i]) ** 2 for i in range(N)])
+Fp = S2ad / S2b
+Fkr = get_fisher_critical(prob, f3, f4)
+if (Fkr > Fp):
+    print("Fkr = {0} > Fp = {1} ---> Р-ня адекватне оригіналу".format(Fkr, Fp))
+else:
+    print("Fkr = {0} < Fp = {1} ---> Р-ня неадекватне оригіналу".format(Fkr, Fp))
