@@ -43,15 +43,8 @@ for i in range(8):
         number = i
 
 
-Ysred = sum(Y) / len(Y)
-
 # Додаються елементи в кінець списку, які підходять під умову, т. Е. Значення середнього Y(Ysred) мінус значення Y
-Sravnenie = []
-for i in Y:
-    if i - Ysred >= 0:
-         Sravnenie.append(i - Ysred)
-
-zadanie = min(Sravnenie) + Ysred
+zadanie = max(Y)
 
 
 print("X:\n", X)
