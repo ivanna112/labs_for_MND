@@ -18,7 +18,8 @@ class Lab2:
 
     def __init__(self):
         self.calculate_and_print()
-
+    start = time()
+    
     @staticmethod
     def average_y(arr):
         average_ny = []
@@ -143,7 +144,10 @@ class Lab2:
         y_p1 = a_0 + a_1 * self.x1_min + a_2 * self.x2_min
         y_p2 = a_0 + a_1 * self.x1_max + a_2 * self.x2_min
         y_p3 = a_0 + a_1 * self.x1_min + a_2 * self.x2_max
-
+        
+        end = time()
+        print('Пройшло часу: ' + str(end - start))
+    
         print('\nНатуралізовані коефіцієнти: \na0 =', round(a_0, 4), '\na1 =', round(a_1, 4), '\na2 =', round(a_2, 4))
         print('\nУ практичний: ', round(y_pr1, 4), round(y_pr2, 4), round(y_pr3, 4))
         print('У середній:', round(avg_y[0], 4), round(avg_y[1], 4), round(avg_y[2], 4))
