@@ -5,6 +5,9 @@ import math
 class Lab2:
     variant = 301
     m = 6
+    if m > 20:
+        print("m > 20, so exit")
+        exit()
 
     y_max = (30 - variant) * 10
     y_min = (20 - variant) * 10
